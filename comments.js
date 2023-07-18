@@ -1,33 +1,33 @@
-// Create a web server
-var express = require('express');
-var app = express();
-var path = require('path');
-var bodyParser = require('body-parser');
-var fs = require('fs');
-var commentsFile = 'comments.json';
+// Create web server
 
-app.use(express.static(path.join(__dirname, 'public')));
+const express = require('express');
+const bodyParser = require('body-parser');
+const axios = require('axios');
+
+const app = express();
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
 
-// Get comments
-app.get('/api/comments', function(req, res) {
-    fs.readFile(commentsFile, function(err, data) {
-        if (err) {
-            console.error(err);
-            process.exit(1);
-        }
-        res.json(JSON.parse(data));
-    });
+// Create event store
+const events = [];
+
+// Routes
+app.post('/events', (req, res) => {
+  const event = req.body;
+
+  events.push(event);
+
+  // Send event to event bus
+  axios.post('http://localhost:4005/events', event);
+
+  res.send({ status: 'OK' });
 });
 
-// Post comments
-app.post('/api/comments', function(req, res) {
-    fs.readFile(commentsFile, function(err, data) {
-        if (err) {
-            console.error(err);
-            process.exit(1);
-        }
-        var comments = JSON.parse(data);
-        var newComment = {
-            id: Date.now(),
+app.get('/events', (req, res) => {
+  // Send all events
+  res.send(events);
+});
+
+// Start server
+app.listen(4001, () => {
+  console.log('Listening on port 4001');
+});
